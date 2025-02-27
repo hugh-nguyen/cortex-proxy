@@ -124,7 +124,7 @@ resource "aws_eks_fargate_profile" "envoy_gateway" {
 
 resource "helm_release" "coredns" {
   name       = "coredns"
-  repository = "https://kubernetes.github.io/charts"
+  repository = "https://charts.bitnami.com/bitnami"
   chart      = "coredns"
   namespace  = "kube-system"
 
@@ -162,6 +162,11 @@ resource "helm_release" "envoy_gateway" {
   namespace  = "envoy-gateway-system"
 
   create_namespace = true
+
+  set {
+    name  = "podLabels.app.kubernetes.io/name"
+    value = "envoy-gateway"
+  }
 
   set {
     name  = "nodeSelector.eks.amazonaws.com/fargate-profile"

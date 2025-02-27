@@ -147,7 +147,13 @@ resource "helm_release" "envoy_gateway" {
   create_namespace = true
 
   set {
+    name  = "nodeSelector.eks.amazonaws.com/fargate-profile"
+    value = "envoy-gateway"
+  }
+
+  set {
     name  = "service.type"
     value = "LoadBalancer"
   }
 }
+

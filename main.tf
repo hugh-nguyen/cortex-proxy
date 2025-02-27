@@ -136,3 +136,36 @@ resource "aws_iam_role_policy_attachment" "fargate_policy" {
   policy_arn = "arn:aws:iam::aws:policy/AdministratorAccess"
 }
 
+resource "aws_vpc_endpoint" "ecr_dkr" {
+  vpc_id            = aws_vpc.eks_vpc.id
+  service_name      = "com.amazonaws.ap-southeast-2.ecr.dkr"
+  vpc_endpoint_type = "Interface"
+  subnet_ids        = aws_subnet.eks[*].id
+  security_group_ids = [aws_security_group.eks_vpc_sg.id]
+}
+
+resource "aws_vpc_endpoint" "ecr_api" {
+  vpc_id            = aws_vpc.eks_vpc.id
+  service_name      = "com.amazonaws.ap-southeast-2.ecr.api"
+  vpc_endpoint_type = "Interface"
+  subnet_ids        = aws_subnet.eks[*].id
+  security_group_ids = [aws_security_group.eks_vpc_sg.id]
+}
+
+resource "aws_vpc_endpoint" "s3" {
+  vpc_id        = aws_vpc.eks_vpc.id
+  service_name  = "com.amazonaws.ap-southeast-2.s3"
+  route_table_ids = [aws_route_table.private.id]
+}
+
+resource "aws_security_group" "eks_vpc_sg" {
+  vpc_id = aws_vpc.eks_vpc.id
+  name   = "eks-vpc-security-group"
+
+  ingress {
+    from_port   = 443
+    to_port     = 443
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+}

@@ -136,21 +136,3 @@ resource "aws_iam_role_policy_attachment" "fargate_policy" {
   policy_arn = "arn:aws:iam::aws:policy/AdministratorAccess"
 }
 
-resource "helm_release" "envoy_gateway" {
-  name       = "envoy-gateway"
-  chart      = "oci://docker.io/envoyproxy/gateway-helm"
-  version    = "v0.0.0-latest"
-  namespace  = "envoy-gateway-system"
-
-  create_namespace = true
-
-  values = [
-    jsonencode({
-      image = {
-        repository = "495599745704.dkr.ecr.ap-southeast-2.amazonaws.com/envoy-gateway"
-        tag        = "v1.3.0"
-        pullPolicy = "IfNotPresent"
-      }
-    })
-  ]
-}

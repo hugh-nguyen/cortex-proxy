@@ -14,3 +14,24 @@ resource "helm_release" "envoy_gateway" {
   chart      = "oci://docker.io/envoyproxy/gateway-helm"
   version    = "v0.0.0-latest"
   namespace  = kubernetes_namespace.envoy_gateway_system.metadata[0].name
+}
+
+
+resource "helm_release" "envoy_gateway" {
+  name       = "envoy-gateway"
+  chart      = "oci://docker.io/envoyproxy/gateway-helm"
+  version    = "v0.0.0-latest"
+  namespace  = "envoy-gateway-system"
+
+  create_namespace = true
+
+  values = [
+    jsonencode({
+      image = {
+        repository = "495599745704.dkr.ecr.ap-southeast-2.amazonaws.com/envoy-gateway"
+        tag        = "v1.3.0"
+        pullPolicy = "IfNotPresent"
+      }
+    })
+  ]
+}

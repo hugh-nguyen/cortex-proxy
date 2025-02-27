@@ -1,0 +1,93 @@
+provider "aws" {
+  region = "ap-southeast-2"
+}
+
+resource "aws_vpc" "eks_vpc" {
+  cidr_block = "10.0.0.0/16"
+
+  enable_dns_support   = true
+  enable_dns_hostnames = true
+
+  tags = {
+    Name = "eks-vpc"
+  }
+}
+
+resource "aws_subnet" "eks" {
+  count = 2
+
+  vpc_id                  = aws_vpc.eks_vpc.id
+  cidr_block              = cidrsubnet(aws_vpc.eks_vpc.cidr_block, 8, count.index)
+  map_public_ip_on_launch = false
+
+  availability_zone = element(data.aws_availability_zones.available.names, count.index)
+
+  tags = {
+    Name = "eks-subnet-${count.index}"
+  }
+}
+
+data "aws_availability_zones" "available" {}
+
+resource "aws_eks_cluster" "eks" {
+  name     = "envoy-eks"
+  role_arn = aws_iam_role.eks.arn
+
+  vpc_config {
+    subnet_ids = aws_subnet.eks[*].id
+    endpoint_private_access = true  # Private access to reduce NAT Gateway costs
+    endpoint_public_access  = false # Disable public access to avoid unnecessary charges
+  }
+}
+
+resource "aws_iam_role" "eks" {
+  name = "eks-cluster-role"
+
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [{
+      Action = "sts:AssumeRole"
+      Effect = "Allow"
+      Principal = {
+        Service = "eks.amazonaws.com"
+      }
+    }]
+  })
+}
+
+resource "aws_iam_role_policy_attachment" "eks_cluster_policy" {
+  role       = aws_iam_role.eks.name
+  policy_arn = "arn:aws:iam::aws:policy/AmazonEKSClusterPolicy"
+}
+
+resource "aws_eks_fargate_profile" "fargate" {
+  cluster_name           = aws_eks_cluster.eks.name
+  fargate_profile_name   = "fargate-profile"
+  pod_execution_role_arn = aws_iam_role.fargate.arn
+
+  subnet_ids = aws_subnet.eks[*].id
+
+  selector {
+    namespace = "default"
+  }
+}
+
+resource "aws_iam_role" "fargate" {
+  name = "eks-fargate-role"
+
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [{
+      Action = "sts:AssumeRole"
+      Effect = "Allow"
+      Principal = {
+        Service = "eks-fargate-pods.amazonaws.com"
+      }
+    }]
+  })
+}
+
+resource "aws_iam_role_policy_attachment" "fargate_policy" {
+  role       = aws_iam_role.fargate.name
+  policy_arn = "arn:aws:iam::aws:policy/AmazonEKSFargatePodExecutionRolePolicy"
+}

@@ -102,9 +102,6 @@ resource "aws_eks_fargate_profile" "kube_system" {
 
   selector {
     namespace = "kube-system"
-    labels = {
-      "eks.amazonaws.com/component" = "coredns"
-    }
   }
 }
 
@@ -116,24 +113,8 @@ resource "aws_eks_fargate_profile" "envoy_gateway" {
 
   selector {
     namespace = "envoy-gateway-system"
-    labels = {
-      "app.kubernetes.io/name" = "envoy-gateway"
-    }
   }
 }
-
-resource "helm_release" "coredns" {
-  name       = "coredns"
-  repository = "https://charts.bitnami.com/bitnami"
-  chart      = "coredns"
-  namespace  = "kube-system"
-
-  set {
-    name  = "nodeSelector.eks.amazonaws.com/fargate-profile"
-    value = "kube-system"
-  }
-}
-
 
 resource "aws_iam_role" "fargate" {
   name = "eks-fargate-role"
@@ -152,7 +133,7 @@ resource "aws_iam_role" "fargate" {
 
 resource "aws_iam_role_policy_attachment" "fargate_policy" {
   role       = aws_iam_role.fargate.name
-  policy_arn = "arn:aws:iam::aws:policy/AmazonEKSFargatePodExecutionRolePolicy"
+  policy_arn = "arn:aws:iam::aws:policy/AdministratorAccess"
 }
 
 resource "helm_release" "envoy_gateway" {
@@ -163,28 +144,4 @@ resource "helm_release" "envoy_gateway" {
 
   create_namespace = true
 
-  set {
-    name  = "podLabels.app.kubernetes.io/name"
-    value = "envoy-gateway"
-  }
-
-  set {
-    name  = "nodeSelector.eks.amazonaws.com/fargate-profile"
-    value = "envoy-gateway"
-  }
-
-  set {
-    name  = "tolerations[0].key"
-    value = "eks.amazonaws.com/compute-type"
-  }
-
-  set {
-    name  = "tolerations[0].operator"
-    value = "Exists"
-  }
-
-  set {
-    name  = "service.type"
-    value = "LoadBalancer"
-  }
 }

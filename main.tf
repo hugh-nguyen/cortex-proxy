@@ -114,11 +114,13 @@ resource "aws_iam_role_policy_attachment" "fargate_policy" {
   policy_arn = "arn:aws:iam::aws:policy/AmazonEKSFargatePodExecutionRolePolicy"
 }
 
-resource "helm_release" "envoy" {
-  name       = "envoy"
-  repository = "https://getambassador.io"
-  chart      = "ambassador"
-  namespace  = "envoy"
+resource "helm_release" "envoy_gateway" {
+  name       = "envoy-gateway"
+  chart      = "oci://docker.io/envoyproxy/gateway-helm"
+  version    = "v0.0.0-latest"
+  namespace  = "envoy-gateway-system"
+
+  create_namespace = true
 
   set {
     name  = "service.type"

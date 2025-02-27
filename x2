@@ -1,0 +1,16 @@
+# 🛠 Explicitly Annotate Namespace for Fargate
+resource "kubernetes_namespace" "envoy_gateway_system" {
+  metadata {
+    name = "envoy-gateway-system"
+    annotations = {
+      "eks.amazonaws.com/compute-type" = "fargate"
+    }
+  }
+}
+
+# 🛠 Helm Release with ImagePullPolicy Always
+resource "helm_release" "envoy_gateway" {
+  name       = "envoy-gateway"
+  chart      = "oci://docker.io/envoyproxy/gateway-helm"
+  version    = "v0.0.0-latest"
+  namespace  = kubernetes_namespace.envoy_gateway_system.metadata[0].name

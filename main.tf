@@ -40,7 +40,7 @@ resource "aws_subnet" "eks" {
 
   vpc_id                  = aws_vpc.eks_vpc.id
   cidr_block              = cidrsubnet(aws_vpc.eks_vpc.cidr_block, 8, count.index)
-  map_public_ip_on_launch = false
+  map_public_ip_on_launch = count.index == 0 ? true : false  # First subnet is public
 
   availability_zone = element(data.aws_availability_zones.available.names, count.index)
 
@@ -82,11 +82,38 @@ resource "aws_iam_role_policy_attachment" "eks_cluster_policy" {
   policy_arn = "arn:aws:iam::aws:policy/AmazonEKSClusterPolicy"
 }
 
+resource "aws_internet_gateway" "eks_igw" {
+  vpc_id = aws_vpc.eks_vpc.id
+
+  tags = {
+    Name = "eks-internet-gateway"
+  }
+}
+
+resource "aws_route_table" "public" {
+  vpc_id = aws_vpc.eks_vpc.id
+
+  route {
+    cidr_block = "0.0.0.0/0"
+    gateway_id = aws_internet_gateway.eks_igw.id
+  }
+
+  tags = {
+    Name = "eks-public-route-table"
+  }
+}
+
+resource "aws_route_table_association" "public" {
+  count          = 1
+  subnet_id      = element(aws_subnet.eks[*].id, 0)
+  route_table_id = aws_route_table.public.id
+}
+
 resource "aws_eip" "nat" {}
 
 resource "aws_nat_gateway" "nat" {
   allocation_id = aws_eip.nat.id
-  subnet_id     = element(aws_subnet.eks[*].id, 0)
+  subnet_id     = element(aws_subnet.eks[*].id, 0) # Use first (public) subnet
 
   tags = {
     Name = "eks-nat-gateway"
@@ -165,22 +192,11 @@ resource "aws_iam_role_policy_attachment" "fargate_policy" {
   policy_arn = "arn:aws:iam::aws:policy/AmazonEKSFargatePodExecutionRolePolicy"
 }
 
-# 🛠 Explicitly Annotate Namespace for Fargate
-resource "kubernetes_namespace" "envoy_gateway_system" {
-  metadata {
-    name = "envoy-gateway-system"
-    annotations = {
-      "eks.amazonaws.com/compute-type" = "fargate"
-    }
-  }
-}
-
-# 🛠 Helm Release with ImagePullPolicy Always
 resource "helm_release" "envoy_gateway" {
   name       = "envoy-gateway"
   chart      = "oci://docker.io/envoyproxy/gateway-helm"
   version    = "v0.0.0-latest"
-  namespace  = kubernetes_namespace.envoy_gateway_system.metadata[0].name
+  namespace  = "envoy-gateway-system"
 
   create_namespace = false
 

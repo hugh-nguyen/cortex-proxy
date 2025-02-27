@@ -40,7 +40,7 @@ resource "aws_subnet" "eks" {
 
   vpc_id                  = aws_vpc.eks_vpc.id
   cidr_block              = cidrsubnet(aws_vpc.eks_vpc.cidr_block, 8, count.index)
-  map_public_ip_on_launch = false
+  map_public_ip_on_launch = true
 
   availability_zone = element(data.aws_availability_zones.available.names, count.index)
 
@@ -50,6 +50,33 @@ resource "aws_subnet" "eks" {
 }
 
 data "aws_availability_zones" "available" {}
+
+resource "aws_internet_gateway" "eks_igw" {
+  vpc_id = aws_vpc.eks_vpc.id
+
+  tags = {
+    Name = "eks-internet-gateway"
+  }
+}
+
+resource "aws_route_table" "public" {
+  vpc_id = aws_vpc.eks_vpc.id
+
+  route {
+    cidr_block = "0.0.0.0/0"
+    gateway_id = aws_internet_gateway.eks_igw.id
+  }
+
+  tags = {
+    Name = "eks-public-route-table"
+  }
+}
+
+resource "aws_route_table_association" "public" {
+  count = 2
+  subnet_id      = aws_subnet.eks[count.index].id
+  route_table_id = aws_route_table.public.id
+}
 
 resource "aws_eks_cluster" "eks" {
   name     = "envoy-eks"
@@ -80,10 +107,6 @@ resource "aws_iam_role" "eks" {
 resource "aws_iam_role_policy_attachment" "eks_cluster_policy" {
   role       = aws_iam_role.eks.name
   policy_arn = "arn:aws:iam::aws:policy/AmazonEKSClusterPolicy"
-}
-
-resource "aws_route_table" "private" {
-  vpc_id = aws_vpc.eks_vpc.id
 }
 
 resource "aws_eks_fargate_profile" "default" {
@@ -138,38 +161,4 @@ resource "aws_iam_role" "fargate" {
 resource "aws_iam_role_policy_attachment" "fargate_policy" {
   role       = aws_iam_role.fargate.name
   policy_arn = "arn:aws:iam::aws:policy/AdministratorAccess"
-}
-
-resource "aws_vpc_endpoint" "ecr_dkr" {
-  vpc_id            = aws_vpc.eks_vpc.id
-  service_name      = "com.amazonaws.ap-southeast-2.ecr.dkr"
-  vpc_endpoint_type = "Interface"
-  subnet_ids        = aws_subnet.eks[*].id
-  security_group_ids = [aws_security_group.eks_vpc_sg.id]
-}
-
-resource "aws_vpc_endpoint" "ecr_api" {
-  vpc_id            = aws_vpc.eks_vpc.id
-  service_name      = "com.amazonaws.ap-southeast-2.ecr.api"
-  vpc_endpoint_type = "Interface"
-  subnet_ids        = aws_subnet.eks[*].id
-  security_group_ids = [aws_security_group.eks_vpc_sg.id]
-}
-
-resource "aws_vpc_endpoint" "s3" {
-  vpc_id        = aws_vpc.eks_vpc.id
-  service_name  = "com.amazonaws.ap-southeast-2.s3"
-  route_table_ids = [aws_route_table.private.id]
-}
-
-resource "aws_security_group" "eks_vpc_sg" {
-  vpc_id = aws_vpc.eks_vpc.id
-  name   = "eks-vpc-security-group"
-
-  ingress {
-    from_port   = 443
-    to_port     = 443
-    protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
 }

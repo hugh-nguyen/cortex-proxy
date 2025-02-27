@@ -56,9 +56,9 @@ resource "aws_eks_cluster" "eks" {
   role_arn = aws_iam_role.eks.arn
 
   vpc_config {
-    subnet_ids = aws_subnet.eks[*].id
-    endpoint_private_access = true  # Allow private access for Fargate
-    endpoint_public_access  = true  # Allow public access if required
+    subnet_ids             = aws_subnet.eks[*].id
+    endpoint_private_access = true  
+    endpoint_public_access  = true
   }
 }
 
@@ -109,7 +109,6 @@ resource "aws_eks_fargate_profile" "kube_system" {
   }
 }
 
-
 resource "aws_eks_fargate_profile" "envoy_gateway" {
   cluster_name           = aws_eks_cluster.eks.name
   fargate_profile_name   = "envoy-gateway"
@@ -119,6 +118,23 @@ resource "aws_eks_fargate_profile" "envoy_gateway" {
 
   selector {
     namespace = "envoy-gateway-system"
+  }
+}
+
+resource "helm_release" "coredns" {
+  name       = "coredns"
+  repository = "https://charts.bitnami.com/bitnami"
+  chart      = "coredns"
+  namespace  = "kube-system"
+
+  set {
+    name  = "nodeSelector.eks.amazonaws.com/fargate-profile"
+    value = "kube-system"
+  }
+
+  set {
+    name  = "isClusterService"
+    value = "true"
   }
 }
 

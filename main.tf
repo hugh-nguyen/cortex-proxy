@@ -82,11 +82,40 @@ resource "aws_iam_role_policy_attachment" "eks_cluster_policy" {
   policy_arn = "arn:aws:iam::aws:policy/AmazonEKSClusterPolicy"
 }
 
+resource "aws_eip" "nat" {}
+
+resource "aws_nat_gateway" "nat" {
+  allocation_id = aws_eip.nat.id
+  subnet_id     = element(aws_subnet.eks[*].id, 0)
+
+  tags = {
+    Name = "eks-nat-gateway"
+  }
+}
+
+resource "aws_route_table" "private" {
+  vpc_id = aws_vpc.eks_vpc.id
+
+  route {
+    cidr_block     = "0.0.0.0/0"
+    nat_gateway_id = aws_nat_gateway.nat.id
+  }
+
+  tags = {
+    Name = "eks-private-route-table"
+  }
+}
+
+resource "aws_route_table_association" "private" {
+  count          = 2
+  subnet_id      = aws_subnet.eks[count.index].id
+  route_table_id = aws_route_table.private.id
+}
+
 resource "aws_eks_fargate_profile" "default" {
   cluster_name           = aws_eks_cluster.eks.name
   fargate_profile_name   = "default"
   pod_execution_role_arn = aws_iam_role.fargate.arn
-
   subnet_ids = aws_subnet.eks[*].id
 
   selector {
@@ -133,15 +162,35 @@ resource "aws_iam_role" "fargate" {
 
 resource "aws_iam_role_policy_attachment" "fargate_policy" {
   role       = aws_iam_role.fargate.name
-  policy_arn = "arn:aws:iam::aws:policy/AdministratorAccess"
+  policy_arn = "arn:aws:iam::aws:policy/AmazonEKSFargatePodExecutionRolePolicy"
 }
 
+# 🛠 Explicitly Annotate Namespace for Fargate
+resource "kubernetes_namespace" "envoy_gateway_system" {
+  metadata {
+    name = "envoy-gateway-system"
+    annotations = {
+      "eks.amazonaws.com/compute-type" = "fargate"
+    }
+  }
+}
+
+# 🛠 Helm Release with ImagePullPolicy Always
 resource "helm_release" "envoy_gateway" {
   name       = "envoy-gateway"
   chart      = "oci://docker.io/envoyproxy/gateway-helm"
   version    = "v0.0.0-latest"
-  namespace  = "envoy-gateway-system"
+  namespace  = kubernetes_namespace.envoy_gateway_system.metadata[0].name
 
-  create_namespace = true
+  create_namespace = false
 
+  values = [
+    jsonencode({
+      image = {
+        repository = "docker.io/envoyproxy/gateway"
+        tag        = "v1.3.0"
+        pullPolicy = "Always"
+      }
+    })
+  ]
 }

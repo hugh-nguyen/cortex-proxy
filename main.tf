@@ -58,7 +58,7 @@ resource "aws_eks_cluster" "eks" {
   vpc_config {
     subnet_ids = aws_subnet.eks[*].id
     endpoint_private_access = true  # Private access to reduce NAT Gateway costs
-    endpoint_public_access  = true # Disable public access to avoid unnecessary charges
+    endpoint_public_access  = true  # Allow external access if required
   }
 }
 
@@ -82,15 +82,39 @@ resource "aws_iam_role_policy_attachment" "eks_cluster_policy" {
   policy_arn = "arn:aws:iam::aws:policy/AmazonEKSClusterPolicy"
 }
 
-resource "aws_eks_fargate_profile" "fargate" {
+resource "aws_eks_fargate_profile" "default" {
   cluster_name           = aws_eks_cluster.eks.name
-  fargate_profile_name   = "fargate-profile"
+  fargate_profile_name   = "default"
   pod_execution_role_arn = aws_iam_role.fargate.arn
 
   subnet_ids = aws_subnet.eks[*].id
 
   selector {
     namespace = "default"
+  }
+}
+
+resource "aws_eks_fargate_profile" "kube_system" {
+  cluster_name           = aws_eks_cluster.eks.name
+  fargate_profile_name   = "kube-system"
+  pod_execution_role_arn = aws_iam_role.fargate.arn
+
+  subnet_ids = aws_subnet.eks[*].id
+
+  selector {
+    namespace = "kube-system"
+  }
+}
+
+resource "aws_eks_fargate_profile" "envoy_gateway" {
+  cluster_name           = aws_eks_cluster.eks.name
+  fargate_profile_name   = "envoy-gateway"
+  pod_execution_role_arn = aws_iam_role.fargate.arn
+
+  subnet_ids = aws_subnet.eks[*].id
+
+  selector {
+    namespace = "envoy-gateway-system"
   }
 }
 
@@ -112,4 +136,18 @@ resource "aws_iam_role" "fargate" {
 resource "aws_iam_role_policy_attachment" "fargate_policy" {
   role       = aws_iam_role.fargate.name
   policy_arn = "arn:aws:iam::aws:policy/AmazonEKSFargatePodExecutionRolePolicy"
+}
+
+resource "helm_release" "envoy_gateway" {
+  name       = "envoy-gateway"
+  chart      = "oci://docker.io/envoyproxy/gateway-helm"
+  version    = "v0.0.0-latest"
+  namespace  = "envoy-gateway-system"
+
+  create_namespace = true
+
+  set {
+    name  = "service.type"
+    value = "LoadBalancer"
+  }
 }

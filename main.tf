@@ -133,6 +133,16 @@ resource "helm_release" "coredns" {
   }
 
   set {
+    name  = "tolerations[0].key"
+    value = "eks.amazonaws.com/compute-type"
+  }
+
+  set {
+    name  = "tolerations[0].operator"
+    value = "Exists"
+  }
+
+  set {
     name  = "isClusterService"
     value = "true"
   }
@@ -169,6 +179,16 @@ resource "helm_release" "envoy_gateway" {
   set {
     name  = "nodeSelector.eks.amazonaws.com/fargate-profile"
     value = "envoy-gateway"
+  }
+
+  set {
+    name  = "tolerations[0].key"
+    value = "eks.amazonaws.com/compute-type"
+  }
+
+  set {
+    name  = "tolerations[0].operator"
+    value = "Exists"
   }
 
   set {

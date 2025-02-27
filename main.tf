@@ -57,8 +57,8 @@ resource "aws_eks_cluster" "eks" {
 
   vpc_config {
     subnet_ids = aws_subnet.eks[*].id
-    endpoint_private_access = true  # Private access to reduce NAT Gateway costs
-    endpoint_public_access  = true  # Allow external access if required
+    endpoint_private_access = true  # Allow private access for Fargate
+    endpoint_public_access  = true  # Allow public access if required
   }
 }
 
@@ -103,8 +103,12 @@ resource "aws_eks_fargate_profile" "kube_system" {
 
   selector {
     namespace = "kube-system"
+    labels = {
+      "k8s-app" = "kube-dns"
+    }
   }
 }
+
 
 resource "aws_eks_fargate_profile" "envoy_gateway" {
   cluster_name           = aws_eks_cluster.eks.name
@@ -147,7 +151,7 @@ resource "helm_release" "envoy_gateway" {
   create_namespace = true
 
   set {
-    name  = "nodeSelector.eks\\.amazonaws\\.com/fargate-profile"
+    name  = "nodeSelector.eks.amazonaws.com/fargate-profile"
     value = "envoy-gateway"
   }
 
@@ -156,4 +160,3 @@ resource "helm_release" "envoy_gateway" {
     value = "LoadBalancer"
   }
 }
-

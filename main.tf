@@ -144,4 +144,13 @@ resource "helm_release" "envoy_gateway" {
 
   create_namespace = true
 
+  values = [
+    jsonencode({
+      image = {
+        repository = "495599745704.dkr.ecr.ap-southeast-2.amazonaws.com/envoy-gateway"
+        tag        = "v1.3.0"
+        pullPolicy = "IfNotPresent"
+      }
+    })
+  ]
 }

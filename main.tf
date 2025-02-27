@@ -82,6 +82,10 @@ resource "aws_iam_role_policy_attachment" "eks_cluster_policy" {
   policy_arn = "arn:aws:iam::aws:policy/AmazonEKSClusterPolicy"
 }
 
+resource "aws_route_table" "private" {
+  vpc_id = aws_vpc.eks_vpc.id
+}
+
 resource "aws_eks_fargate_profile" "default" {
   cluster_name           = aws_eks_cluster.eks.name
   fargate_profile_name   = "default"

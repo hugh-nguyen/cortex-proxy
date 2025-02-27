@@ -98,13 +98,12 @@ resource "aws_eks_fargate_profile" "kube_system" {
   cluster_name           = aws_eks_cluster.eks.name
   fargate_profile_name   = "kube-system"
   pod_execution_role_arn = aws_iam_role.fargate.arn
-
   subnet_ids = aws_subnet.eks[*].id
 
   selector {
     namespace = "kube-system"
     labels = {
-      "k8s-app" = "kube-dns"
+      "eks.amazonaws.com/component" = "coredns"
     }
   }
 }
@@ -113,17 +112,19 @@ resource "aws_eks_fargate_profile" "envoy_gateway" {
   cluster_name           = aws_eks_cluster.eks.name
   fargate_profile_name   = "envoy-gateway"
   pod_execution_role_arn = aws_iam_role.fargate.arn
-
   subnet_ids = aws_subnet.eks[*].id
 
   selector {
     namespace = "envoy-gateway-system"
+    labels = {
+      "app.kubernetes.io/name" = "envoy-gateway"
+    }
   }
 }
 
 resource "helm_release" "coredns" {
   name       = "coredns"
-  repository = "https://charts.bitnami.com/bitnami"
+  repository = "https://kubernetes.github.io/charts"
   chart      = "coredns"
   namespace  = "kube-system"
 
@@ -131,22 +132,8 @@ resource "helm_release" "coredns" {
     name  = "nodeSelector.eks.amazonaws.com/fargate-profile"
     value = "kube-system"
   }
-
-  set {
-    name  = "tolerations[0].key"
-    value = "eks.amazonaws.com/compute-type"
-  }
-
-  set {
-    name  = "tolerations[0].operator"
-    value = "Exists"
-  }
-
-  set {
-    name  = "isClusterService"
-    value = "true"
-  }
 }
+
 
 resource "aws_iam_role" "fargate" {
   name = "eks-fargate-role"

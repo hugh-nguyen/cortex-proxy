@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Math Results</title>
+    <script>
+        async function fetchResult() {
+            const x = document.getElementById("x").value;
+            const y = document.getElementById("y").value;
+            if (!x || !y) {
+                alert("Please enter both X and Y values.");
+                return;
+            }
+
+            // Extract version from URL path
+            const pathParts = window.location.pathname.split('/').filter(Boolean); 
+            const version = pathParts.length > 0 ? pathParts[0] : "1.0.45"; // Default to 1.0.45
+
+            if (!["1.0.38", "1.0.45"].includes(version)) {
+                alert("Invalid version in URL. Use /1.0.38/ or /1.0.45/");
+                return;
+            }
+
+            try {
+                const response = await fetch("http://localhost:8080/getresult/?x=" + x + "&y=" + y, {
+                    method: "GET",
+                    headers: {
+                        "X-API-Version": version
+                    }
+                });
+
+                const data = await response.json();
+                document.getElementById("result").innerText = "Result: " + (data.result !== undefined ? data.result : "Error");
+            } catch (error) {
+                document.getElementById("result").innerText = "Error: Unable to reach Envoy.";
+            }
+        }
+    </script>
+</head>
+<body>
+    <h2>Enter numbers:</h2>
+    <label for="x">X:</label>
+    <input type="number" id="x" required>
+    <label for="y">Y:</label>
+    <input type="number" id="y" required>
+    <button onclick="fetchResult()">Get Result</button>
+
+    <h3 id="result"></h3>
+</body>
+</html>

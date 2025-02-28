@@ -1,0 +1,39 @@
+version: "3.8"
+
+services:
+  service-a:
+    build: ./service-a
+    ports:
+      - "5000:5000"
+    depends_on:
+      - envoy
+    networks:
+      - mynetwork
+
+  service-bv1:
+    build: ./service-bv1
+    ports:
+      - "5001:5001"
+    networks:
+      - mynetwork
+
+  service-bv2:
+    build: ./service-bv2
+    ports:
+      - "5002:5002"
+    networks:
+      - mynetwork
+
+  envoy:
+    build: ./envoy
+    ports:
+      - "8080:8080"
+    networks:
+      - mynetwork
+    depends_on:
+      - service-bv1
+      - service-bv2
+
+networks:
+  mynetwork:
+    driver: bridge

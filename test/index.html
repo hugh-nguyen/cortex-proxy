@@ -15,19 +15,20 @@
 
             // Extract version from URL path
             const pathParts = window.location.pathname.split('/').filter(Boolean); 
-            const version = pathParts.length > 0 ? pathParts[0] : "1.0.45"; // Default to 1.0.45
+            const version = pathParts.length > 0 ? pathParts[0] : null; // Default to no header
 
-            if (!["1.0.38", "1.0.45"].includes(version)) {
-                alert("Invalid version in URL. Use /1.0.38/ or /1.0.45/");
-                return;
-            }
+            const url = "http://localhost:8080/getresult/?x=" + x + "&y=" + y;
+            console.log("Requesting:", url, "with version:", version);
 
             try {
-                const response = await fetch("http://localhost:8080/getresult/?x=" + x + "&y=" + y, {
+                const headers = {};
+                if (version) {
+                    headers["X-API-Version"] = version;
+                }
+
+                const response = await fetch(url, {
                     method: "GET",
-                    headers: {
-                        "X-API-Version": version
-                    }
+                    headers: headers
                 });
 
                 const data = await response.json();

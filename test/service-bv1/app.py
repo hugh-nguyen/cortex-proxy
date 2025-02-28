@@ -2,7 +2,7 @@ from flask import Flask, request
 
 app = Flask(__name__)
 
-@app.route('/getresult/')
+@app.route('/b/getresult/')
 def get_result_v1():
     x = request.args.get('x', type=int)
     y = request.args.get('y', type=int)

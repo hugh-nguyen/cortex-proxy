@@ -17,7 +17,7 @@
             const pathParts = window.location.pathname.split('/').filter(Boolean); 
             const version = pathParts.length > 0 ? pathParts[0] : null; // Default to no header
 
-            const url = "http://localhost:8080/getresult/?x=" + x + "&y=" + y;
+            const url = "http://localhost:8080/a/getresult/?x=" + x + "&y=" + y;
             console.log("Requesting:", url, "with version:", version);
 
             try {

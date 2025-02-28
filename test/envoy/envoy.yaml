@@ -19,15 +19,17 @@ static_resources:
                       domains: ["*"]
                       cors:
                         allow_origin_string_match:
-                          - safe_regex:
-                              google_re2: {}
-                              regex: ".*"
+                          - exact: "*"
                         allow_methods: "GET, POST, OPTIONS"
                         allow_headers: "X-API-Version, Content-Type"
                         expose_headers: "X-API-Version"
                       routes:
                         - match:
-                            prefix: "/getresult/"
+                            prefix: "/a/getresult/"
+                          route:
+                            cluster: service_a
+                        - match:
+                            prefix: "/b/getresult/"
                             headers:
                               - name: "X-API-Version"
                                 string_match:
@@ -35,7 +37,7 @@ static_resources:
                           route:
                             cluster: service_bv1
                         - match:
-                            prefix: "/getresult/"
+                            prefix: "/b/getresult/"
                             headers:
                               - name: "X-API-Version"
                                 string_match:
@@ -43,7 +45,7 @@ static_resources:
                           route:
                             cluster: service_bv2
                         - match:
-                            prefix: "/getresult/"
+                            prefix: "/b/getresult/"
                           route:
                             cluster: service_bv1
                 http_filters:
@@ -55,6 +57,19 @@ static_resources:
                       "@type": type.googleapis.com/envoy.extensions.filters.http.router.v3.Router
 
   clusters:
+    - name: service_a
+      connect_timeout: 0.25s
+      type: STRICT_DNS
+      lb_policy: ROUND_ROBIN
+      load_assignment:
+        cluster_name: service_a
+        endpoints:
+          - lb_endpoints:
+              - endpoint:
+                  address:
+                    socket_address:
+                      address: service-a
+                      port_value: 5000
     - name: service_bv1
       connect_timeout: 0.25s
       type: STRICT_DNS

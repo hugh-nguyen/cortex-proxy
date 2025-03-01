@@ -1,11 +1,12 @@
 import express, { Request, Response } from 'express';
-// import { setupAutoHeaderForwarding } from 'cortex-nodejs';
+import { setupAutoHeaderForwarding } from 'cortex-nodejs';
 import axios from 'axios';
 
 const app = express();
 
-// The one-liner that captures inbound headers & monkey-patches axios
-// setupAutoHeaderForwarding(app);
+// Set up our auto header forwarding middleware (this applies your monkey-patch)
+// (You can keep this if you want the global behavior too.)
+setupAutoHeaderForwarding(app);
 
 app.get('/a/getresult', async (req: Request, res: Response) => {
   const x = parseInt(req.query.x as string, 10);
@@ -14,8 +15,16 @@ app.get('/a/getresult', async (req: Request, res: Response) => {
     return res.status(400).json({ error: 'Missing x or y' });
   }
 
+  // // Explicitly extract the inbound X-API-Version header
+  // const apiVersion = req.header('X-API-Version');
+  // console.log('Extracted X-API-Version from inbound request:', apiVersion);
+
   try {
-    // No manual header forwarding needed; monkeyPatchAxios handles it
+  //   // Manually forward the header in the axios request to Envoy
+  //   const response = await axios.get(`http://envoy:8080/b/getresult?x=${x}&y=${y}`, {
+  //     headers: apiVersion ? { 'X-API-Version': apiVersion } : {}
+  //   });
+
     const response = await axios.get(`http://envoy:8080/b/getresult?x=${x}&y=${y}`);
     return res.status(response.status).json(response.data);
   } catch (err: any) {

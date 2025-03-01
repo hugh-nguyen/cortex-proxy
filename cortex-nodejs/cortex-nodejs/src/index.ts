@@ -12,6 +12,7 @@ import './patchAxios';
  * - Each request, sets the inbound headers in a global variable used by the axios monkey patch
  */
 export function setupAutoHeaderForwarding(app: Application) {
+  console.log(`!! 1 index setupAutoHeaderForwarding - v0.123.11`)
   app.use((req, res, next) => {
     captureInboundHeaders(req, res, () => {
       const inbound = req.app.get('inboundHeaders') || {};

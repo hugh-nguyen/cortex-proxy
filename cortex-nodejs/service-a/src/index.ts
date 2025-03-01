@@ -1,6 +1,9 @@
+// import 'cortex-nodejs/register';
+
 import express, { Request, Response } from 'express';
 import { setupAutoHeaderForwarding } from 'cortex-nodejs';
 import axios from 'axios';
+console.log('service-a route axios path:', require.resolve('axios'));
 
 const app = express();
 
@@ -25,6 +28,7 @@ app.get('/a/getresult', async (req: Request, res: Response) => {
   //     headers: apiVersion ? { 'X-API-Version': apiVersion } : {}
   //   });
 
+    console.log('About to call axios.get in service-a route');
     const response = await axios.get(`http://envoy:8080/b/getresult?x=${x}&y=${y}`);
     return res.status(response.status).json(response.data);
   } catch (err: any) {

@@ -1,0 +1,39 @@
+services:
+  service-a:
+    build: ./service-a
+    container_name: service-a
+    ports:
+      - "5000:5000"
+    networks:
+      - mynetwork
+    # remove depends_on: envoy
+
+  service-bv1:
+    build: ./service-bv1
+    container_name: service-bv1
+    ports:
+      - "5001:5001"
+    networks:
+      - mynetwork
+
+  service-bv2:
+    build: ./service-bv2
+    container_name: service-bv2
+    ports:
+      - "5002:5002"
+    networks:
+      - mynetwork
+
+  envoy:
+    build: ./envoy
+    ports:
+      - "8080:8080"
+    networks:
+      - mynetwork
+    depends_on:
+      - service-bv1
+      - service-bv2
+
+networks:
+  mynetwork:
+    driver: bridge

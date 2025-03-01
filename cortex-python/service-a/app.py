@@ -3,6 +3,9 @@ import requests
 
 app = Flask(__name__)
 
+from hmcortexpy import setup_auto_header_forwarding
+setup_auto_header_forwarding(app)
+
 ENVOY_URL = "http://envoy:8080"
 
 @app.route('/a/getresult/')
@@ -14,11 +17,12 @@ def get_result():
     if x is None or y is None:
         return jsonify({"error": "Missing x or y"}), 400
 
-    if version:
-        response = requests.get(f"{ENVOY_URL}/b/getresult/?x={x}&y={y}", headers={"X-API-Version": version})
-    else:
-        response = requests.get(f"{ENVOY_URL}/b/getresult/?x={x}&y={y}")
+    # if version:
+    #     response = requests.get(f"{ENVOY_URL}/b/getresult/?x={x}&y={y}", headers={"X-API-Version": version})
+    # else:
+    #     response = requests.get(f"{ENVOY_URL}/b/getresult/?x={x}&y={y}")
 
+    response = requests.get(f"{ENVOY_URL}/b/getresult/?x={x}&y={y}")
 
     return response.json(), response.status_code
 

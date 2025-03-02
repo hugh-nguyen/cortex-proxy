@@ -3,7 +3,7 @@ import requests
 
 app = Flask(__name__)
 
-from hmcortexpy import setup_auto_header_forwarding
+from axon import setup_auto_header_forwarding
 setup_auto_header_forwarding(app)
 
 ENVOY_URL = "http://envoy:8080"

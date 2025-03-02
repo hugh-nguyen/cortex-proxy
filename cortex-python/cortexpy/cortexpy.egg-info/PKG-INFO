@@ -1,6 +1,0 @@
-Metadata-Version: 2.2
-Name: cortexpy
-Version: 0.1.0
-Summary: Flask middleware to forward inbound headers automatically
-Requires-Dist: Flask>=2.0
-Requires-Dist: requests>=2.0

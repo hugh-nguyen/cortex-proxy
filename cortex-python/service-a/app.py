@@ -1,16 +1,10 @@
 from flask import Flask, request, jsonify
 import requests
+from axon.integrations.flask import instrument_with_axon
 
 app = Flask(__name__)
 
-
-from axon import setup_auto_header_forwarding, capture_inbound_headers
-
-setup_auto_header_forwarding()
-
-@app.before_request
-def capture_headers():
-    capture_inbound_headers(request.headers)
+instrument_with_axon(app)
 
 ENVOY_URL = "http://envoy:8080"
 

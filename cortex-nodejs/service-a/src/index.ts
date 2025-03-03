@@ -1,13 +1,13 @@
 import express, { Request, Response } from 'express';
-import { setupAutoHeaderForwarding } from 'cortex-axon-js';
 import axios from 'axios';
+import { axonExpressMiddleware } from 'cortex-axon-js';
 console.log('service-a route axios path:', require.resolve('axios'));
 
 const app = express();
 
 // Set up our auto header forwarding middleware (this applies your monkey-patch)
 // (You can keep this if you want the global behavior too.)
-setupAutoHeaderForwarding(app);
+app.use(axonExpressMiddleware);
 
 app.get('/a/getresult', async (req: Request, res: Response) => {
   const x = parseInt(req.query.x as string, 10);

@@ -1,15 +1,5 @@
-import type { Application } from 'express';
-import { captureInboundHeaders } from './middleware';
-import { setCurrentInboundHeaders } from './patchAxios';
+// index.ts
+import './patchAxios';  // ensures the patch is applied
 
-import './patchAxios';
-
-export function setupAutoHeaderForwarding(app: Application) {
-  app.use((req, res, next) => {
-    captureInboundHeaders(req, res, () => {
-      const inbound = req.app.get('inboundHeaders') || {};
-      setCurrentInboundHeaders(inbound);
-      next();
-    });
-  });
-}
+export { axonExpressMiddleware } from './integrations/express';
+export { setCurrentInboundHeaders } from './patchAxios';  // if needed

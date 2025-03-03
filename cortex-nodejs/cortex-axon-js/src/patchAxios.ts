@@ -1,10 +1,8 @@
-import axios, {
-  AxiosRequestConfig,
-  AxiosResponse,
-} from 'axios';
+import axios, { AxiosRequestConfig, AxiosResponse } from 'axios';
 
 let currentInboundHeaders: Record<string, any> = {};
 
+// Helper to update the stored inbound headers.
 export function setCurrentInboundHeaders(headers: Record<string, any>) {
   currentInboundHeaders = headers;
 }
@@ -19,12 +17,14 @@ axios.request = function patchedRequest<
   config = config || {};
   config.headers = config.headers || {};
 
-  for (const [k, v] of Object.entries(currentInboundHeaders)) {
-    if (k.toLowerCase() === 'host') continue;
-    if (!(k in config.headers)) {
-      config.headers[k] = v;
-    }
+  const version = Object.entries(currentInboundHeaders).find(
+    ([key, _]) => key.toLowerCase() === 'x-stack-version'
+  )?.[1];
+
+  if (version && !('X-Stack-Version' in config.headers)) {
+    config.headers['X-Stack-Version'] = version;
   }
+  
   return originalRequest.call(this, config) as Promise<R>;
 };
 
@@ -36,11 +36,13 @@ axios.Axios.prototype.request = function patchedRequest<
   config = config || {};
   config.headers = config.headers || {};
 
-  for (const [k, v] of Object.entries(currentInboundHeaders)) {
-    if (k.toLowerCase() === 'host') continue;
-    if (!(k in config.headers)) {
-      config.headers[k] = v;
-    }
+  const version = Object.entries(currentInboundHeaders).find(
+    ([key, _]) => key.toLowerCase() === 'x-stack-version'
+  )?.[1];
+
+  if (version && !('X-Stack-Version' in config.headers)) {
+    config.headers['X-Stack-Version'] = version;
   }
+  console.log("!! 0.1.5 - Patched axios request called, forwarding X-Stack-Version:", version);
   return originalRequest.call(this, config) as Promise<R>;
 };

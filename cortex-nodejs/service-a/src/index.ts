@@ -1,7 +1,5 @@
-// import 'cortex-nodejs/register';
-
 import express, { Request, Response } from 'express';
-import { setupAutoHeaderForwarding } from 'cortex-nodejs';
+import { setupAutoHeaderForwarding } from 'cortex-axon-js';
 import axios from 'axios';
 console.log('service-a route axios path:', require.resolve('axios'));
 
@@ -18,14 +16,14 @@ app.get('/a/getresult', async (req: Request, res: Response) => {
     return res.status(400).json({ error: 'Missing x or y' });
   }
 
-  // // Explicitly extract the inbound X-API-Version header
-  // const apiVersion = req.header('X-API-Version');
-  // console.log('Extracted X-API-Version from inbound request:', apiVersion);
+  // // Explicitly extract the inbound X-Stack-Version header
+  // const apiVersion = req.header('X-Stack-Version');
+  // console.log('Extracted X-Stack-Version from inbound request:', apiVersion);
 
   try {
   //   // Manually forward the header in the axios request to Envoy
   //   const response = await axios.get(`http://envoy:8080/b/getresult?x=${x}&y=${y}`, {
-  //     headers: apiVersion ? { 'X-API-Version': apiVersion } : {}
+  //     headers: apiVersion ? { 'X-Stack-Version': apiVersion } : {}
   //   });
 
     console.log('About to call axios.get in service-a route');

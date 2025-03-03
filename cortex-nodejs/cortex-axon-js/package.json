@@ -1,6 +1,6 @@
 {
-    "name": "cortex-nodejs",
-    "version": "0.123.11",
+    "name": "cortex-axon-js",
+    "version": "0.1.1",
     "main": "dist/index.js",
     "types": "dist/index.d.ts",
     "exports": {

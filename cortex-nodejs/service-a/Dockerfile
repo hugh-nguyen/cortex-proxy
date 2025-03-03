@@ -10,9 +10,6 @@ RUN update-ca-certificates
 ENV NODE_EXTRA_CA_CERTS=/usr/local/share/ca-certificates/ca.crt
 RUN npm install -g typescript
 
-# Also copy "cortex-node" folder so local install can work
-# COPY ../cortex-nodejs ./cortex-nodejs
-
 # First install dependencies (including local "cortex-node" -> "file:../cortex-node")
 RUN npm install
 

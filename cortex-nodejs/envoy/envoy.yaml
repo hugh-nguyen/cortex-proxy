@@ -21,8 +21,8 @@ static_resources:
                         allow_origin_string_match:
                           - exact: "*"
                         allow_methods: "GET, POST, OPTIONS"
-                        allow_headers: "X-API-Version, Content-Type"
-                        expose_headers: "X-API-Version"
+                        allow_headers: "X-Stack-Version, Content-Type"
+                        expose_headers: "X-Stack-Version"
 
                       routes:
                         - match:
@@ -33,7 +33,7 @@ static_resources:
                         - match:
                             prefix: "/b/"
                             headers:
-                              - name: "X-API-Version"
+                              - name: "X-Stack-Version"
                                 string_match:
                                   exact: "1.0.38"
                           route:
@@ -42,7 +42,7 @@ static_resources:
                         - match:
                             prefix: "/b/"
                             headers:
-                              - name: "X-API-Version"
+                              - name: "X-Stack-Version"
                                 string_match:
                                   exact: "1.0.45"
                           route:

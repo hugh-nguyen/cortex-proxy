@@ -1,5 +1,4 @@
-// index.ts
-import './patchAxios';  // ensures the patch is applied
+import './patchAxios';
 
-export { axonExpressMiddleware } from './integrations/express';
-export { setCurrentInboundHeaders } from './patchAxios';  // if needed
+export { instrumentWithAxon } from './integrations/express';
+export { setCurrentInboundHeaders } from './patchAxios';

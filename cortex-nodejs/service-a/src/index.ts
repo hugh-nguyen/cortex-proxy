@@ -1,13 +1,10 @@
 import express, { Request, Response } from 'express';
 import axios from 'axios';
-import { axonExpressMiddleware } from 'cortex-axon-js';
-console.log('service-a route axios path:', require.resolve('axios'));
+import { instrumentWithAxon } from 'cortex-axon-js';
 
 const app = express();
 
-// Set up our auto header forwarding middleware (this applies your monkey-patch)
-// (You can keep this if you want the global behavior too.)
-app.use(axonExpressMiddleware);
+app.use(instrumentWithAxon);
 
 app.get('/a/getresult', async (req: Request, res: Response) => {
   const x = parseInt(req.query.x as string, 10);
@@ -16,17 +13,7 @@ app.get('/a/getresult', async (req: Request, res: Response) => {
     return res.status(400).json({ error: 'Missing x or y' });
   }
 
-  // // Explicitly extract the inbound X-Stack-Version header
-  // const apiVersion = req.header('X-Stack-Version');
-  // console.log('Extracted X-Stack-Version from inbound request:', apiVersion);
-
   try {
-  //   // Manually forward the header in the axios request to Envoy
-  //   const response = await axios.get(`http://envoy:8080/b/getresult?x=${x}&y=${y}`, {
-  //     headers: apiVersion ? { 'X-Stack-Version': apiVersion } : {}
-  //   });
-
-    console.log('About to call axios.get in service-a route');
     const response = await axios.get(`http://envoy:8080/b/getresult?x=${x}&y=${y}`);
     return res.status(response.status).json(response.data);
   } catch (err: any) {

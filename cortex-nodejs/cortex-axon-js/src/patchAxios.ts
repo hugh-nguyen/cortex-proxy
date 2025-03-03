@@ -43,6 +43,6 @@ axios.Axios.prototype.request = function patchedRequest<
   if (version && !('X-Stack-Version' in config.headers)) {
     config.headers['X-Stack-Version'] = version;
   }
-  console.log("!! 0.1.5 - Patched axios request called, forwarding X-Stack-Version:", version);
+  console.log("!! 0.1.6 - Patched axios request called, forwarding X-Stack-Version:", version);
   return originalRequest.call(this, config) as Promise<R>;
 };

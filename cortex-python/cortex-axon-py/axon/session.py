@@ -1,27 +1,24 @@
 import requests
 from requests import Session
-from flask import g
-import copy
+import contextvars
+
+inbound_headers_var = contextvars.ContextVar("inbound_headers", default={})
+
+def capture_inbound_headers(headers):
+    inbound_headers_var.set(dict(headers))
 
 _original_request = requests.Session.request
 
 def _forwarding_request(self, method, url, **kwargs):
-    if hasattr(g, "inbound_headers"):
-        inbound = dict(g.inbound_headers)
-        inbound.pop("Host", None)
-        
-        # Merge inbound headers into kwargs['headers']
+    headers_to_forward = inbound_headers_var.get()
+    if headers_to_forward and "X-Stack-Version" in headers_to_forward:
+        x_stack_version = headers_to_forward["X-Stack-Version"]
         if "headers" not in kwargs:
             kwargs["headers"] = {}
-        for k, v in inbound.items():
-            # Don’t overwrite if dev explicitly set something
-            if k not in kwargs["headers"]:
-                kwargs["headers"][k] = v
+        if "X-Stack-Version" not in kwargs["headers"]:
+            kwargs["headers"]["X-Stack-Version"] = x_stack_version
 
     return _original_request(self, method, url, **kwargs)
 
 def patch_requests():
-    """
-    Monkey patch requests.Session.request to auto-inject inbound headers.
-    """
     Session.request = _forwarding_request

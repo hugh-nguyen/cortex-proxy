@@ -23,7 +23,7 @@
             try {
                 const headers = {};
                 if (version) {
-                    headers["X-API-Version"] = version;
+                    headers["X-Stack-Version"] = version;
                 }
 
                 const response = await fetch(url, {

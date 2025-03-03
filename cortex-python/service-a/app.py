@@ -3,8 +3,14 @@ import requests
 
 app = Flask(__name__)
 
-from axon import setup_auto_header_forwarding
-setup_auto_header_forwarding(app)
+
+from axon import setup_auto_header_forwarding, capture_inbound_headers
+
+setup_auto_header_forwarding()
+
+@app.before_request
+def capture_headers():
+    capture_inbound_headers(request.headers)
 
 ENVOY_URL = "http://envoy:8080"
 
@@ -12,13 +18,13 @@ ENVOY_URL = "http://envoy:8080"
 def get_result():
     x = request.args.get('x', type=int)
     y = request.args.get('y', type=int)
-    version = request.headers.get("X-API-Version")
+    version = request.headers.get("X-Stack-Version")
 
     if x is None or y is None:
         return jsonify({"error": "Missing x or y"}), 400
 
     # if version:
-    #     response = requests.get(f"{ENVOY_URL}/b/getresult/?x={x}&y={y}", headers={"X-API-Version": version})
+    #     response = requests.get(f"{ENVOY_URL}/b/getresult/?x={x}&y={y}", headers={"X-Stack-Version": version})
     # else:
     #     response = requests.get(f"{ENVOY_URL}/b/getresult/?x={x}&y={y}")
 

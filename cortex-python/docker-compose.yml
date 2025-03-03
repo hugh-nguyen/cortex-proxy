@@ -8,32 +8,32 @@ services:
     depends_on:
       - envoy
     networks:
-      - mynetwork
+      - cortexnetwork
 
   service-bv1:
     build: ./service-bv1
     ports:
       - "5001:5001"
     networks:
-      - mynetwork
+      - cortexnetwork
 
   service-bv2:
     build: ./service-bv2
     ports:
       - "5002:5002"
     networks:
-      - mynetwork
+      - cortexnetwork
 
   envoy:
     build: ./envoy
     ports:
       - "8080:8080"
     networks:
-      - mynetwork
+      - cortexnetwork
     depends_on:
       - service-bv1
       - service-bv2
 
 networks:
-  mynetwork:
+  cortexnetwork:
     driver: bridge

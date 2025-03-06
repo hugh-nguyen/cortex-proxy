@@ -1,0 +1,15 @@
+{
+  "compilerOptions": {
+    "target": "ES2020",
+    "module": "CommonJS",
+    "outDir": "dist",
+    "esModuleInterop": true,
+    "strict": true,
+
+    /* Add these: */
+    "declaration": true,        // Generate .d.ts files
+    "emitDeclarationOnly": false, // Also emit JS
+    "resolveJsonModule": true
+  },
+  "include": ["src/**/*.ts"]
+}

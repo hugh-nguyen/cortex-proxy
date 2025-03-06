@@ -1,17 +1,16 @@
-version: "3.8"
-
 services:
   service-a:
     build: ./service-a
+    container_name: service-a
     ports:
       - "5000:5000"
-    depends_on:
-      - envoy
     networks:
       - cortexnetwork
+    # remove depends_on: envoy
 
   service-b-0-0-1:
     build: ./service-b-0-0-1
+    container_name: service-b-0-0-1
     ports:
       - "5001:5001"
     networks:
@@ -19,6 +18,7 @@ services:
 
   service-b-0-0-2:
     build: ./service-b-0-0-2
+    container_name: service-b-0-0-2
     ports:
       - "5002:5002"
     networks:

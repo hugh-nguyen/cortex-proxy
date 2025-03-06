@@ -1,0 +1,82 @@
+Below are function‐based versions for both FastAPI (using Starlette) and Django. These examples perform the same work as your class‐based middleware—capturing inbound headers and calling your session functions—but use functions instead of classes.
+
+FastAPI / Starlette Function-Based Middleware
+You can use Starlette’s built‑in decorator to add function middleware. For example:
+
+python
+Copy code
+# fast_middleware.py
+from axon.session import capture_inbound_headers, patch_requests
+from starlette.requests import Request
+from starlette.responses import Response
+
+async def axon_instrument_middleware(request: Request, call_next) -> Response:
+    # Capture inbound headers and pass them as a dict
+    capture_inbound_headers(dict(request.headers))
+    response = await call_next(request)
+    return response
+Then in your FastAPI app (or Starlette app), add the middleware:
+
+python
+Copy code
+from fastapi import FastAPI
+from fast_middleware import axon_instrument_middleware
+
+app = FastAPI()
+app.middleware("http")(axon_instrument_middleware)
+
+# ... your routes ...
+Django Function-Based Middleware
+Since Django 1.10, you can write a “simple” middleware as a function. For example:
+
+python
+Copy code
+# django_middleware.py
+from axon.session import capture_inbound_headers, patch_requests
+
+def axon_instrument_middleware(get_response):
+    def middleware(request):
+        headers = {}
+        for key, value in request.META.items():
+            if key.startswith("HTTP_"):
+                # Convert header names from HTTP_HEADER_NAME to Header-Name
+                header_name = key[5:].replace("_", "-").title()
+                headers[header_name] = value
+        if "CONTENT_TYPE" in request.META:
+            headers["Content-Type"] = request.META["CONTENT_TYPE"]
+        if "CONTENT_LENGTH" in request.META:
+            headers["Content-Length"] = request.META["CONTENT_LENGTH"]
+
+        # Capture the headers
+        capture_inbound_headers(headers)
+        response = get_response(request)
+        return response
+
+    return middleware
+Then add this middleware to your Django settings (in settings.py):
+
+python
+Copy code
+MIDDLEWARE = [
+    # ... other middleware classes ...
+    'your_project_path.django_middleware.axon_instrument_middleware',
+    # ... remaining middleware ...
+]
+(Replace 'your_project_path.django_middleware.axon_instrument_middleware' with the actual Python import path.)
+
+Explanation
+FastAPI:
+The function axon_instrument_middleware accepts the incoming request and the next call, captures headers using your session function, then passes control onward.
+
+Django:
+The middleware function wraps the get_response callable. It extracts the HTTP headers from request.META, calls capture_inbound_headers, and then processes the request.
+
+These function-based implementations do the same work as class-based ones but use a functional style that you may find more consistent with your overall design.
+
+
+
+Search
+
+Deep research
+
+ChatGPT can make mistakes. Check important info.
